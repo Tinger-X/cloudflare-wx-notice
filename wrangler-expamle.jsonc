@@ -1,0 +1,36 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "wx-notice",
+	"main": "src/index.ts",
+	"compatibility_date": "2025-06-04",
+	"routes": [
+		{
+			"pattern": "wx-notice.your-domain.com",
+			"custom_domain": true
+		}
+	],
+	"kv_namespaces": [
+		{
+			"binding": "KeyValue",
+			"id": "your-kv-namespace-id"
+		}
+	],
+	"workers_dev": false,
+	"observability": {
+		"enabled": true
+	},
+	"vars": {
+		"AppID": "your-app-id",
+		"AppToken": "your-app-token",
+		"AppSecret": "your-app-secret",
+		"AppAccessKey": "YourAccessKey",  // kv存储库中Access的key
+		"Owner": "your-openid",  // 默认信息推送接收人，项目拥有者的openid
+		"DefaultTemplate": "your-template-id",  // 默认消息模板的id
+		"AuthHeader": "Your-Auth-Header",  // header鉴权的字段名称
+		"AuthValue": "YourAuthValue",  // header鉴权的权值
+		"MaxContentLength": 1048576, // 内容存储的最大取值：1024 * 1024 = 1M
+		"MaxContentTTL": 86400, // 内容存储的最大时间：60 * 60 * 24 = 1天
+		"KVTicketPrefix": "_Prefix_",  // 内容存储凭证的前缀，防止恶意碰撞 `AppAccessKey`
+		"KVTicketSize": 8  // 内容存储凭证的长度
+	}
+}

@@ -1,0 +1,14 @@
+{
+	"name": "wx-notice",
+	"version": "1.0.0",
+	"private": true,
+	"scripts": {
+		"deploy": "wrangler deploy",
+		"dev": "wrangler dev"
+	},
+	"devDependencies": {
+		"fast-xml-parser": "^4.5.1",
+		"typescript": "^5.5.2",
+		"wrangler": "^4.20.0"
+	}
+}
