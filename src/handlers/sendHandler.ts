@@ -126,7 +126,6 @@ export async function sendHandler(
   try {
     payload = JSON.parse(text);
   } catch(e: any) {
-    // console.log(text);
     return Response.json({ code: 400, msg: "request body error" });
   }
   payload.option = fillDefaultOption(payload.option, env);

@@ -5,8 +5,8 @@ import { DetailRouteName } from "./utils/shard.d";
 import { WorkerEntrypoint } from "cloudflare:workers";
 
 export class RpcWxNotice extends WorkerEntrypoint {
-	async fetch(): Promise<Response> {
-		return new Response("OK");
+	async fetch(request: Request): Promise<Response> {
+		return sendHandler(request, this.env as Env);
 	}
 
 	async sendNotice(payload: MessageConfig): Promise<Response> {

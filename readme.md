@@ -44,6 +44,7 @@
 + 修改 `wrangler.jsonc` 内容：
   - `routes.pattern`: 修改为自己的域名，需要和接口 `URL` 对应
   - `kv_namespaces.id`：修改为cloudflare上的某个kv存储库的id（新建kv存储）
+  - `vars.WorkerHost`：修改为 接口 `URL` + `/send`，如：`https://wx-notice.your-domain.com/send`。用于RPC服务确定存储地址，RPC没有request所以无法取得origin
   - `vars.AppID`：修改为 `appID`
   - `vars.AppToken`：修改为接口 `Token`
   - `vars.AppSecret`：修改为 `appsecret`
@@ -88,14 +89,91 @@
 }
 ```
 
-## JS-fetch
+## worker间调用
+
+**v1.0.1新增**
++ 优点：响应快、不消耗Cloudflare流量
++ 缺点：仅限于cloudflare worker，且本地开发时不可用。所以其它服务也是worker时，推荐使用此方式
+
+注：在新worker的配置文件中添加：
+```jsonc
+{
+  "services": [
+		{
+			"binding": "WxNotice",
+			"service": "wx-notice",  // 本服务的cloudflare worker名称
+			"entrypoint": "RpcWxNotice"  // 本服务暴露的rpc接口类
+		}
+	]
+}
+```
+
+### Fetch方式
 
 ```js
+// 构造请求
+const payload = {
+  option: {
+    url: "https://wwww.cloudflare.com/"
+  },
+  params: {
+    event: "查看新闻",
+    time: "just now",
+    detail: "重大事件，Cloudflare是赛博大善人！"
+  }
+};
+const req = new Request(
+  "https://wx-notice.your-domain.com/send",
+  {
+    method: "POST",
+    headers: {
+      "Your-Auth-Header": "YourAuthValue",
+      "Content-Type": "application/json; charset=utf-8"
+    },
+    body: JSON.stringify(payload)
+  }
+);
+try {
+  await env.WxNotice.fetch(req);
+} catch(e) {
+  console.warn(e.message)
+}
+```
+
+### RPC方式
+
+```js
+const payload = {
+  option: {
+    url: "https://wwww.cloudflare.com/"
+  },
+  params: {
+    event: "查看新闻",
+    time: "just now",
+    detail: "重大事件，Cloudflare是赛博大善人！"
+  }
+};
+try {
+  await env.WxNotice.sendNotice(payload);
+} catch(e) {
+  console.error(e.message)
+}
+```
+
+## HTTP请求调用
+
++ 优点：只要能发HTTP请求，就可以实现微信通知
++ 缺点：走Cloudflare流量，速度较慢
+
+### JS-fetch
+
+```js
+const html = `<!DOCTYPE html><html lang="zh"><head><title>任务进度</title><style> * {margin: 0;padding: 0;box-sizing: border-box;font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;}  body {background: #f5f5f5;}  .progress-container {width: 90vw;margin: 50px auto 0;padding: 30px;background: white;border-radius: 8px;box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);text-align: center;}  .title {margin-bottom: 20px;color: #333;font-size: 3em;font-weight: 500;}  .progress-bar {height: 8px;background: #e0e0e0;border-radius: 4px;overflow: hidden;}  .progress-fill {height: 100%;background: #4285f4;width: 75%;border-radius: 4px;}  .progress-value {margin-top: 10px;font-size: 2em;color: #666;}  .note {margin-top: 20px;padding: 8px;background: #f0f7ff;border-radius: 4px;color: #333;font-size: 2em;}</style></head><body><div class="progress-container"><h2 class="title">数据处理进度</h2><div class="progress-bar"><div class="progress-fill"></div></div><div class="progress-value">已完成 75%</div><div class="note">此进度展示当前数据处理状态</div></div></body></html>`;
 const payload = {
   "option": {
     "detail": {
       "ttl": 120,
-      "content": "<!DOCTYPE html><html lang=\"zh\"><head><title>任务进度</title><style> * {margin: 0;padding: 0;box-sizing: border-box;font-family: \"Segoe UI\", Tahoma, Geneva, Verdana, sans-serif;}  body {background: #f5f5f5;}  .progress-container {width: 90vw;margin: 50px auto 0;padding: 30px;background: white;border-radius: 8px;box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);text-align: center;}  .title {margin-bottom: 20px;color: #333;font-size: 3em;font-weight: 500;}  .progress-bar {height: 8px;background: #e0e0e0;border-radius: 4px;overflow: hidden;}  .progress-fill {height: 100%;background: #4285f4;width: 75%;border-radius: 4px;}  .progress-value {margin-top: 10px;font-size: 2em;color: #666;}  .note {margin-top: 20px;padding: 8px;background: #f0f7ff;border-radius: 4px;color: #333;font-size: 2em;}</style></head><body><div class=\"progress-container\"><h2 class=\"title\">数据处理进度</h2><div class=\"progress-bar\"><div class=\"progress-fill\"></div></div><div class=\"progress-value\">已完成 75%</div><div class=\"note\">此进度展示当前数据处理状态</div></div></body></html>"
+      "content": html
     }
   },
   "params": {
@@ -119,7 +197,7 @@ fetch("https://wx-notice.your-domain.com/send", options)
   .catch(err => console.error(err));
 ```
 
-## Python-requests
+### Python-requests
 
 ```python
 import requests
@@ -142,7 +220,7 @@ res = requests.post(url, headers=header, json=payload)
 print(res.json())
 ```
 
-## Java-okhttp+fastjson
+### Java-okhttp+fastjson
 
 ```java
 OkHttpClient client = new OkHttpClient();
