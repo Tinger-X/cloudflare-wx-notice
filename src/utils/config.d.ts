@@ -4,6 +4,7 @@
 declare namespace Cloudflare {
   interface Env {
     KeyValue: KVNamespace;
+    WorkerHost: string;
     AppID: string;
     AppToken: string;
     AppSecret: string;

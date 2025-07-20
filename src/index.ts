@@ -1,7 +1,18 @@
 import { rootHandler } from "./handlers/rootHandler";
-import { sendHandler } from "./handlers/sendHandler";
+import { sendHandler, rpcSendNotice, MessageConfig } from "./handlers/sendHandler";
 import { detailHandler } from "./handlers/detailHandler";
 import { DetailRouteName } from "./utils/shard.d";
+import { WorkerEntrypoint } from "cloudflare:workers";
+
+export class RpcWxNotice extends WorkerEntrypoint {
+	async fetch(): Promise<Response> {
+		return new Response("OK");
+	}
+
+	async sendNotice(payload: MessageConfig): Promise<Response> {
+		return rpcSendNotice(payload, this.env as Env);
+	}
+}
 
 export default {
 	async fetch(request: Request, env: Env): Promise<Response> {
@@ -16,6 +27,6 @@ export default {
 			return detailHandler(request, env, path[1]);
 		}
 
-		return Response.json({ code: 404, msg: "resource not found" })
-	},
-} satisfies ExportedHandler<Env>;
+		return Response.json({ code: 404, msg: "resource not found" });
+	}
+};

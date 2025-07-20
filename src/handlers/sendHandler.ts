@@ -14,7 +14,7 @@ interface MsgOption {
 
 type MsgParam = { [k: string]: { value: any } };
 
-interface SendMsg {
+export interface MessageConfig {
   option?: MsgOption;
   params: { [k: string]: any } | MsgParam;
 }
@@ -99,6 +99,18 @@ async function sendWxNotice(access: string, option: MsgOption, params: MsgParam)
   }
 }
 
+export async function rpcSendNotice(payload: MessageConfig, env: Env): Promise<Response> {
+  payload.option = fillDefaultOption(payload.option, env);
+  if (payload.option?.detail !== undefined) {
+    const uri = await generateUriForContent(env, payload.option.detail as { ttl: number, content: string });
+    payload.option.url = `${env.WorkerHost}${uri}`;
+  }
+  payload.params = buildParams(payload.params);
+  const access = await prepareAccessToken(env);
+  if (access.token === undefined) return Response.json({ code: 500, msg: access.msg });
+  return sendWxNotice(access.token, payload.option, payload.params);
+}
+
 export async function sendHandler(
   request: Request,
   env: Env
@@ -110,7 +122,7 @@ export async function sendHandler(
     return Response.json({ code: 403, msg: "Method Not Allowed" });
   }
   const text = await request.text();
-  let payload: SendMsg;
+  let payload: MessageConfig;
   try {
     payload = JSON.parse(text);
   } catch(e: any) {

@@ -20,6 +20,7 @@
 		"enabled": true
 	},
 	"vars": {
+		"WorkerHost": "https://wx-notice.your-domain.com",  // 结尾没有`/`的host url，用于RPC服务确定存储地址，RPC没有request所以无法取得origin
 		"AppID": "your-app-id",
 		"AppToken": "your-app-token",
 		"AppSecret": "your-app-secret",
